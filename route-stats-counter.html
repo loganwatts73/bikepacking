@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  .route-stats {
+    width: min(100%, 800px);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  .route-stat {
+    //background: #1b1b18;
+    color: #1b1b18;//e7ecd6;
+    border-radius: 14px;
+    min-height: 155px;
+    padding: 22px 12px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    box-sizing: border-box;
+    
+    opacity:0;
+    transform:translateY(18px);
+    transition:.45s ease;
+  }
+  
+  .route-stat.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    //background-color: #1b1b18;
+}
+
+
+  .route-stat-number {
+    font-size: clamp(52px, 7vw, 82px);
+    line-height: 0.95;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    margin-bottom: 18px;
+  }
+
+  .route-stat-label {
+    font-size: 15px;
+    line-height: 1.15;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+  }
+
+  @media (max-width: 700px) {
+    .route-stats {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      padding: 6px;
+    }
+
+    .route-stat {
+      min-height: 145px;
+      padding: 18px 10px 16px;
+    }
+
+    .route-stat-number {
+      font-size: 52px;
+      margin-bottom: 14px;
+    }
+
+    .route-stat-label {
+      font-size: 13px;
+    }
+  }
+</style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="route-stats">
+  <div class="route-stat">
+    <div class="route-stat-number" data-target="543" data-decimals="0">0</div>
+    <div class="route-stat-label">
+      Curated Route Guides<br>
+      in Our Worldwide Network
+    </div>
+  </div>
+
+  <div class="route-stat">
+    <div class="route-stat-number" data-target="153" data-decimals="0">0</div>
+    <div class="route-stat-label">
+      Thousand Miles of<br>
+      Bikepacking Routes
+    </div>
+  </div>
+
+  <div class="route-stat">
+    <div class="route-stat-number" data-target="4.12" data-decimals="2">0</div>
+    <div class="route-stat-label">
+      Million Route Guide<br>
+      Pageviews Annually
+    </div>
+  </div>
+
+  <div class="route-stat">
+    <div class="route-stat-number" data-target="789" data-decimals="0">0</div>
+    <div class="route-stat-label">
+      Route Updates<br>
+      Made Annually
+    </div>
+  </div>
+</div>
+    
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const statBlock = document.querySelector(".route-stats");
+    const cards = Array.from(document.querySelectorAll(".route-stat"));
+    let hasAnimated = false;
+
+   const countDuration = 700;   // was 1000
+const fadeDuration = 350;    // was 550
+const pauseBetween = 60;     // was 120
+
+    function animateNumber(el) {
+      return new Promise((resolve) => {
+        const target = parseFloat(el.dataset.target);
+        const decimals = parseInt(el.dataset.decimals || "0", 10);
+        const startTime = performance.now();
+
+        function update(currentTime) {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / countDuration, 1);
+
+          // Smooth ease-out
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const currentValue = target * eased;
+
+          el.textContent = currentValue.toFixed(decimals);
+
+          if (progress < 1) {
+            requestAnimationFrame(update);
+          } else {
+            el.textContent = target.toFixed(decimals);
+            resolve();
+          }
+        }
+
+        requestAnimationFrame(update);
+      });
+    }
+
+    function wait(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    async function runSequence() {
+      if (hasAnimated) return;
+      hasAnimated = true;
+
+      const reduceMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+
+      if (reduceMotion) {
+        cards.forEach((card) => {
+          const number = card.querySelector(".route-stat-number");
+          const target = parseFloat(number.dataset.target);
+          const decimals = parseInt(number.dataset.decimals || "0", 10);
+
+          card.classList.add("is-visible");
+          number.textContent = target.toFixed(decimals);
+        });
+
+        return;
+      }
+
+      cards.forEach((card, index) => {
+    const number = card.querySelector(".route-stat-number");
+
+    setTimeout(() => {
+        card.classList.add("is-visible");
+
+        setTimeout(() => {
+            animateNumber(number);
+        }, 100);
+
+    }, index * 450);
+});
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            runSequence();
+            observer.disconnect();
+          }
+        });
+      },
+      {
+        threshold: 0.25
+      }
+    );
+
+    observer.observe(statBlock);
+  });
+</script></body>
+</html>
